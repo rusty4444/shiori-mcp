@@ -1,0 +1,32 @@
+You are validating a new Shiori MCP server implementation before publication.
+
+Repository: this checkout of shiori-mcp
+Implemented tool surface:
+- shiori_health_check()
+- shiori_list_bookmarks(limit, offset)
+- shiori_search_bookmarks(query, tag, limit, offset)
+- shiori_get_bookmark(bookmark_id)
+- shiori_get_bookmark_by_url(url)
+- shiori_add_bookmark(url, title, excerpt, tags, public, create_archive)
+- shiori_update_bookmark(bookmark_json)
+- shiori_update_bookmark_fields(bookmark_id, title, excerpt, public, tags, create_archive)
+- shiori_delete_bookmark(bookmark_id)
+- shiori_delete_bookmarks(ids_json)
+- shiori_list_tags()
+- shiori_rename_tag(tag_id, name)
+- shiori_list_accounts()
+
+Implementation notes:
+- Python 3.11 package using mcp.server.fastmcp.FastMCP.
+- All tool params use typing.Annotated + pydantic.Field descriptions.
+- Auth supports either SHIORI_SESSION_ID or login via SHIORI_USERNAME and SHIORI_PASSWORD.
+- Client uses Shiori's documented legacy `/api/*` API with X-Session-Id headers. Shiori's `docs/API.md` currently documents these endpoints; `docs/APIv1.md` states the new API is still in development and self-documented only on a running instance, so this server intentionally targets the documented legacy API for compatibility.
+- Tags are normalised from comma-separated names into Shiori's required [{"name": ...}] format for bookmark creation.
+- Client-side search and get-by-id wrap Shiori's documented /api/bookmarks endpoint.
+- Authenticated writes are mocked with respx; public live validation checks Shiori API docs and repo pages without credentials.
+
+Evaluate market/implementation fit and correctness. Return exactly:
+1. VERDICT: PASS or FAIL
+2. BLOCKERS: bullet list, or None
+3. NON-BLOCKING IMPROVEMENTS: up to 5 bullets
+4. PUBLICATION CONFIDENCE: 0-100
