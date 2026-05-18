@@ -1,0 +1,59 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.rusty4444/shiori-mcp",
+  "title": "Shiori MCP",
+  "description": "MCP server for Shiori bookmark management and tag workflows.",
+  "version": "0.1.0",
+  "websiteUrl": "https://github.com/rusty4444/shiori-mcp",
+  "repository": {
+    "url": "https://github.com/rusty4444/shiori-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "shiori-mcp",
+      "version": "0.1.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "SHIORI_BASE_URL",
+          "description": "Base URL of the Shiori instance, e.g. https://shiori.example.com",
+          "isRequired": true,
+          "isSecret": false,
+          "placeholder": "https://shiori.example.com"
+        },
+        {
+          "name": "SHIORI_SESSION_ID",
+          "description": "Existing Shiori session id; skips login if provided",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "SHIORI_USERNAME",
+          "description": "Shiori username; required unless SHIORI_SESSION_ID is set",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "SHIORI_PASSWORD",
+          "description": "Shiori password; required unless SHIORI_SESSION_ID is set",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "github": {
+        "owner": "rusty4444",
+        "repo": "shiori-mcp"
+      }
+    }
+  }
+}
