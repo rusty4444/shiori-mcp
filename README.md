@@ -1,5 +1,7 @@
 # Shiori MCP
 
+<!-- mcp-name: io.github.rusty4444/shiori-mcp -->
+
 A Model Context Protocol (MCP) server for [Shiori](https://github.com/go-shiori/shiori), the self-hosted bookmark and read-it-later manager.
 
 ## Capabilities
