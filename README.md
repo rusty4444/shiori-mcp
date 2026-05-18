@@ -96,3 +96,5 @@ This server targets Shiori's documented legacy API under `/api/*` because the ne
 ## Safety
 
 The write-capable tools mutate a Shiori bookmark database. Keep credentials in environment variables or a secret manager, never in source control.
+
+This project was developed with the assistance of AI tools.
