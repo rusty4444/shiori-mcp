@@ -88,6 +88,7 @@ pip install -e .
 ```bash
 python -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -e '.[dev]'
 ruff check .
 pytest
@@ -95,6 +96,8 @@ python scripts/live_docs_test.py
 ```
 
 `live_docs_test.py` validates Shiori public API documentation and repository pages without credentials. Authenticated read/write API behaviours are covered with mocked HTTP tests.
+
+Optional LLM validation can be run with any configured OpenAI-compatible endpoint. For local Aeon validation, set `AEON_BASE_URL` and optionally `AEON_MODEL` / `AEON_API_KEY` before running `python scripts/model_validate.py`.
 
 ## API note
 

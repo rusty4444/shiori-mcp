@@ -29,6 +29,18 @@ def test_login_then_list_bookmarks() -> None:
 
 
 @respx.mock
+def test_configure_none_clears_cached_session() -> None:
+    client.configure(base_url="https://shiori.example", session_id="stale-session")
+    client.configure(base_url="https://shiori.example", username="user", password="pass", session_id=None)
+    login = respx.post("https://shiori.example/api/login").mock(return_value=httpx.Response(200, json={"session": "fresh-session"}))
+    bookmarks = respx.get("https://shiori.example/api/bookmarks").mock(return_value=httpx.Response(200, json={"bookmarks": []}))
+
+    assert client.list_bookmarks()["bookmarks"] == []
+    assert login.called
+    assert bookmarks.calls[0].request.headers["X-Session-Id"] == "fresh-session"
+
+
+@respx.mock
 def test_session_id_skips_login_and_adds_bookmark_tag_objects() -> None:
     client.configure(base_url="https://shiori.example", session_id="existing")
     route = respx.post("https://shiori.example/api/bookmarks").mock(
@@ -62,6 +74,39 @@ def test_search_and_get_bookmark_are_client_side() -> None:
     assert client.get_bookmark_by_url("https://example.com/a")["id"] == 1
     with pytest.raises(client.ShioriError, match="not found"):
         client.get_bookmark(999)
+
+
+@respx.mock
+def test_search_and_get_walk_all_bookmark_pages() -> None:
+    client.configure(base_url="https://shiori.example", session_id="sid")
+    route = respx.get("https://shiori.example/api/bookmarks").mock(
+        side_effect=[
+            httpx.Response(200, json={"bookmarks": [{"id": 1, "title": "Page One", "url": "https://example.com/1"}], "page": 1, "maxPage": 2}),
+            httpx.Response(
+                200,
+                json={
+                    "bookmarks": [
+                        {
+                            "id": 2,
+                            "title": "Deep MCP",
+                            "url": "https://example.com/deep",
+                            "excerpt": "tools",
+                            "tags": [{"name": "Research"}],
+                        }
+                    ],
+                    "page": 2,
+                    "maxPage": 2,
+                },
+            ),
+        ]
+    )
+
+    result = client.search_bookmarks(query="deep", tag="research")
+
+    assert result["bookmarks"][0]["id"] == 2
+    assert result["total"] == 1
+    assert route.calls[0].request.url.params["page"] == "1"
+    assert route.calls[1].request.url.params["page"] == "2"
 
 
 @respx.mock

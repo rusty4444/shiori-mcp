@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -12,6 +12,7 @@ _USERNAME: str | None = None
 _PASSWORD: str | None = None
 _SESSION_ID: str | None = None
 _TIMEOUT = 20.0
+_UNSET = object()
 
 
 class ShioriError(RuntimeError):
@@ -19,24 +20,29 @@ class ShioriError(RuntimeError):
 
 
 def configure(
-    base_url: str | None = None,
-    username: str | None = None,
-    password: str | None = None,
-    session_id: str | None = None,
-    timeout: float | None = None,
+    base_url: str | None | object = _UNSET,
+    username: str | None | object = _UNSET,
+    password: str | None | object = _UNSET,
+    session_id: str | None | object = _UNSET,
+    timeout: float | None | object = _UNSET,
 ) -> None:
-    """Configure the Shiori API client."""
+    """Configure the Shiori API client.
+
+    Omitted values leave existing configuration unchanged. Passing None clears
+    a string setting, which is useful for tests and long-lived processes that
+    need to switch accounts or force a fresh login.
+    """
     global _BASE_URL, _USERNAME, _PASSWORD, _SESSION_ID, _TIMEOUT
-    if base_url is not None:
-        _BASE_URL = base_url.rstrip("/")
-    if username is not None:
-        _USERNAME = username
-    if password is not None:
-        _PASSWORD = password
-    if session_id is not None:
-        _SESSION_ID = session_id
-    if timeout is not None:
-        _TIMEOUT = timeout
+    if base_url is not _UNSET:
+        _BASE_URL = str(base_url).rstrip("/") if base_url is not None else None
+    if username is not _UNSET:
+        _USERNAME = str(username) if username is not None else None
+    if password is not _UNSET:
+        _PASSWORD = str(password) if password is not None else None
+    if session_id is not _UNSET:
+        _SESSION_ID = str(session_id) if session_id is not None else None
+    if timeout is not _UNSET and timeout is not None:
+        _TIMEOUT = float(cast(float, timeout))
 
 
 def _base_url() -> str:
@@ -132,16 +138,37 @@ def _tag_objects(tags: str | list[str] | list[dict[str, Any]] | None) -> list[di
 
 
 def health_check() -> dict[str, Any]:
-    data = list_bookmarks()
-    return {"ok": True, "bookmarks_seen": len(data.get("bookmarks", [])), "page": data.get("page"), "maxPage": data.get("maxPage")}
+    tags = list_tags()
+    return {"ok": True, "tags_seen": len(tags)}
 
 
 def list_bookmarks() -> dict[str, Any]:
-    data = _request("GET", "/api/bookmarks")
+    """Return all bookmarks by walking Shiori's paginated legacy endpoint."""
+    first_page = _bookmarks_page(1)
+    all_bookmarks = list(first_page.get("bookmarks", []))
+    max_page = _positive_int(first_page.get("maxPage"), default=1)
+
+    for page in range(2, max_page + 1):
+        page_data = _bookmarks_page(page)
+        all_bookmarks.extend(page_data.get("bookmarks", []))
+
+    return {**first_page, "bookmarks": all_bookmarks, "page": 1, "maxPage": max_page}
+
+
+def _bookmarks_page(page: int) -> dict[str, Any]:
+    data = _request("GET", "/api/bookmarks", params={"page": page})
     if not isinstance(data, dict):
         raise ShioriError(f"Expected bookmark list object, got {type(data).__name__}")
     data.setdefault("bookmarks", [])
     return data
+
+
+def _positive_int(value: Any, *, default: int) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed > 0 else default
 
 
 def search_bookmarks(query: str | None = None, tag: str | None = None, limit: int = 30, offset: int = 0) -> dict[str, Any]:

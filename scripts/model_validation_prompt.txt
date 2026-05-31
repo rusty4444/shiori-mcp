@@ -11,7 +11,7 @@ Implemented tool surface:
 - shiori_update_bookmark(bookmark_json)
 - shiori_update_bookmark_fields(bookmark_id, title, excerpt, public, tags, create_archive)
 - shiori_delete_bookmark(bookmark_id)
-- shiori_delete_bookmarks(ids_json)
+- shiori_delete_bookmarks(ids)
 - shiori_list_tags()
 - shiori_rename_tag(tag_id, name)
 - shiori_list_accounts()
