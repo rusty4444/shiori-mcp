@@ -14,6 +14,15 @@ mcp = FastMCP("shiori-mcp")
 register_tools(mcp)
 
 
+def _timeout_from_env() -> float:
+    raw = os.environ.get("SHIORI_TIMEOUT", "20")
+    try:
+        return float(raw)
+    except ValueError:
+        print("Error: SHIORI_TIMEOUT must be a number", file=sys.stderr)
+        sys.exit(1)
+
+
 def main() -> None:
     """Run the Shiori MCP server over stdio."""
     base_url = os.environ.get("SHIORI_BASE_URL", "").strip()
@@ -25,7 +34,7 @@ def main() -> None:
         username=os.environ.get("SHIORI_USERNAME"),
         password=os.environ.get("SHIORI_PASSWORD"),
         session_id=os.environ.get("SHIORI_SESSION_ID"),
-        timeout=float(os.environ.get("SHIORI_TIMEOUT", "20")),
+        timeout=_timeout_from_env(),
     )
     mcp.run(transport="stdio")
 

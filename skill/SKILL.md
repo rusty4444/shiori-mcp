@@ -1,7 +1,7 @@
 ---
 name: shiori
 description: Use the Shiori MCP server for bookmark/read-it-later capture, search, tags, and account discovery.
-version: 0.1.0
+version: 0.1.1
 author: Hermes Agent
 license: MIT
 metadata:

@@ -57,7 +57,16 @@ def main() -> int:
     openai_key = os.environ.get("OPENAI_API_KEY")
     if openai_key:
         targets.append(("openai_gpt41_mini", "https://api.openai.com/v1", "gpt-4.1-mini", openai_key))
-    targets.append(("aeon_ultimate", "http://192.168.68.164:8000/v1", "aeon-ultimate", "default"))
+    aeon_base_url = os.environ.get("AEON_BASE_URL")
+    if aeon_base_url:
+        targets.append(
+            (
+                "aeon_ultimate_xs",
+                aeon_base_url,
+                os.environ.get("AEON_MODEL", "aeon-ultimate-xs"),
+                os.environ.get("AEON_API_KEY", "default"),
+            )
+        )
 
     failures = 0
     for name, base, model, key in targets:
@@ -68,7 +77,7 @@ def main() -> int:
             if "VERDICT: PASS" not in content and "1. VERDICT: PASS" not in content:
                 failures += 1
         except Exception as exc:
-            if name in {"aeon_ultimate", "openai_gpt41_mini"}:
+            if name in {"aeon_ultimate_xs", "openai_gpt41_mini"}:
                 print(f"SKIPPED optional model validation: {exc}")
                 continue
             failures += 1

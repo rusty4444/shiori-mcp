@@ -39,7 +39,7 @@ def register_tools(mcp: FastMCP) -> None:
     @mcp.tool()
     async def shiori_search_bookmarks(
         query: Annotated[str | None, Field(description="Case-insensitive text to match against bookmark title, URL, or excerpt")]= None,
-        tag: Annotated[str | None, Field(description="Optional tag name to filter bookmarks by exact tag name")]= None,
+        tag: Annotated[str | None, Field(description="Optional tag name to filter bookmarks by case-insensitive tag name")]= None,
         limit: Annotated[int, Field(description="Maximum number of matching bookmarks to return")]= 30,
         offset: Annotated[int, Field(description="Number of matching bookmarks to skip")]= 0,
     ) -> str:
@@ -134,14 +134,12 @@ def register_tools(mcp: FastMCP) -> None:
 
     @mcp.tool()
     async def shiori_delete_bookmarks(
-        ids_json: Annotated[str, Field(description="JSON array of Shiori bookmark ids to delete, for example [1,2,3]")],
+        ids: Annotated[list[int] | str, Field(description="Shiori bookmark ids to delete as an array, for example [1, 2, 3]. A JSON array string is also accepted for backward compatibility.")],
     ) -> str:
-        """Delete one or more Shiori bookmarks by id."""
+        """Delete one or more bookmarks by id."""
         try:
-            ids = json.loads(ids_json)
-            if not isinstance(ids, list) or not all(isinstance(x, int) for x in ids):
-                raise ValueError("ids_json must decode to a JSON array of integers")
-            return _json(api.delete_bookmarks(ids))
+            parsed_ids = _parse_bookmark_ids(ids)
+            return _json(api.delete_bookmarks(parsed_ids))
         except Exception as exc:
             return f"Error deleting Shiori bookmarks: {exc}"
 
@@ -171,6 +169,13 @@ def register_tools(mcp: FastMCP) -> None:
             return _json(api.list_accounts())
         except Exception as exc:
             return f"Error listing Shiori accounts: {exc}"
+
+
+def _parse_bookmark_ids(ids: list[int] | str) -> list[int]:
+    parsed = json.loads(ids) if isinstance(ids, str) else ids
+    if not isinstance(parsed, list) or not all(isinstance(x, int) for x in parsed):
+        raise ValueError("ids must be an array of integers")
+    return parsed
 
 
 def _json(data: Any) -> str:

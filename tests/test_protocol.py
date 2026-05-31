@@ -61,6 +61,10 @@ def test_tools_list_has_complete_descriptions() -> None:
     assert "shiori_delete_bookmark" in names
     assert "shiori_delete_bookmarks" in names
     assert "shiori_list_tags" in names
+    delete_many = next(t for t in tools if t["name"] == "shiori_delete_bookmarks")
+    delete_props = delete_many["inputSchema"]["properties"]
+    assert "ids" in delete_props
+    assert "ids_json" not in delete_props
 
     for tool in tools:
         assert tool.get("description"), f"missing tool description: {tool['name']}"
@@ -84,3 +88,21 @@ def test_missing_base_url_fails_cleanly() -> None:
     )
     assert proc.returncode == 1
     assert "SHIORI_BASE_URL is required" in proc.stderr
+
+
+def test_invalid_timeout_fails_cleanly() -> None:
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT / "src")
+    env["SHIORI_BASE_URL"] = "https://shiori.example"
+    env["SHIORI_TIMEOUT"] = "not-a-number"
+    proc = subprocess.run(
+        [sys.executable, "-m", "shiori_mcp"],
+        cwd=ROOT,
+        input="",
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=10,
+    )
+    assert proc.returncode == 1
+    assert "SHIORI_TIMEOUT must be a number" in proc.stderr
